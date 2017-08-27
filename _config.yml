@@ -20,16 +20,7 @@ github_username:  swa19
 # Build settings
 #markdown: kramdown
 
-# Where things are
-source:       .
-destination:  ./_site
-plugins_dir:  _plugins
-layouts_dir:  _layouts
-data_dir:     _data
-includes_dir: _includes
-collections:
-  posts:
-    output:   true
+
 
 # Handling Reading
 safe:                 false
@@ -58,11 +49,11 @@ excerpt_separator: "\n\n"
 incremental: false
 
 # Serving
-detach:  false
-port:    4000
-host:    127.0.0.1
-baseurl: "" # does not include hostname
-show_dir_listing: false
+#detach:  false
+#port:    4000
+#host:    127.0.0.1
+#baseurl: "" # does not include hostname
+#show_dir_listing: false
 
 # Outputting
 permalink:     date
