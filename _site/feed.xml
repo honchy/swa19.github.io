@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>每日一记</title>
+    <description></description>
+    <link>https://swa19.github.io//</link>
+    <atom:link href="https://swa19.github.io//feed.xml" rel="self" type="application/rss+xml"/>
+    <pubDate>Mon, 28 Aug 2017 20:02:04 +0800</pubDate>
+    <lastBuildDate>Mon, 28 Aug 2017 20:02:04 +0800</lastBuildDate>
+    <generator>Jekyll v3.0.1</generator>
+    
+      <item>
+        <title>SpringSchedule详解</title>
+        <description>&lt;p&gt;SpringSchedule配置简单，并且由于属于Spring框架，可以通过Spring来管理bean的生命周期，从而可以降低编程的复杂度。&lt;/p&gt;
+
+&lt;h1&gt;SpringSchedule的使用&lt;/h1&gt;
+
+&lt;p&gt;以注解配置为例&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;配置文件中添加配置
+添加相关注解配置：&lt;/li&gt;
+&lt;/ol&gt;
+
+
+&lt;pre&gt;&lt;code&gt;xmlns:task=&quot;http://www.springframework.org/schema/task&quot;
+http://www.springframework.org/schema/task  http://www.springframework.org/schema/task/spring-task-3.0.xsd
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;开启定时任务的注解扫描：
+&lt;code&gt;&amp;lt;task:annotation-driven/&amp;gt;&lt;/code&gt;&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;为方法添加@Scheduled注解
+设置定时任务的方式有两种，一种是配置一定的延时时间以固定频率运行，一种是设置scon表达式&lt;/li&gt;
+&lt;/ol&gt;
+
+
+&lt;h1&gt;代码分析&lt;/h1&gt;
+
+&lt;p&gt;&lt;img src=&quot;/pic/diagram.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;主要类：ScheduledAnnotationBeanPostProcessor
+方法调用链：postProcessAfterInitialization()-&gt;processScheduled()-&gt;TaskSchedule.schedule()&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&quot;graphLR&quot;&gt;    A[postProcessAfterInitialization]--&amp;gt;B(postProcessAfterInitialization)
+    B--&amp;gt;C{cron?}
+    C--&amp;gt;|Y|D[ScheduledTaskRegistrar.scheduleCronTask]
+    C--&amp;gt;|N|E[ScheduledTaskRegistrar.scheduleFixedDelayTask]
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;ScheduledTaskRegistrar.scheduleFixedDelayTask实现比较简单，内部通过TaskScheduler的scheduleAtFixedRate方法实现任务的调度，并返回任务结果
+而ScheduledTaskRegistrar.scheduleCronTask相对来说较复杂，主要看下TaskScheduler的&lt;code&gt;ScheduledFuture&amp;lt;?&amp;gt; schedule(Runnable task, Trigger trigger);&lt;/code&gt;方法
+根据以上包的结构图来看，TaskScheduler有六个子类，
+&lt;img src=&quot;/pic/SpringSchedule2.png&quot; alt=&quot;&quot; /&gt;
+看下ThreadPoolTaskScheduler的schedule方法&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;@Override
+    public ScheduledFuture&amp;lt;?&amp;gt; schedule(Runnable task, Trigger trigger) {
+        ScheduledExecutorService executor = getScheduledExecutor();
+        try {
+            ErrorHandler errorHandler = this.errorHandler;
+            if (errorHandler == null) {
+                errorHandler = TaskUtils.getDefaultErrorHandler(true);
+            }
+            return new ReschedulingRunnable(task, trigger, executor, errorHandler).schedule();
+        }
+        catch (RejectedExecutionException ex) {
+            throw new TaskRejectedException(&quot;Executor [&quot; + executor + &quot;] did not accept task: &quot; + task, ex);
+        }
+    }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;其中的ReschedulingRunnable是一个Runnable的子类，同时也是ScheduledFuture的子类，它的schedule方法如下&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;@Nullable
+    public ScheduledFuture&amp;lt;?&amp;gt; schedule() {
+        synchronized (this.triggerContextMonitor) {
+            this.scheduledExecutionTime = this.trigger.nextExecutionTime(this.triggerContext);
+            if (this.scheduledExecutionTime == null) {
+                return null;
+            }
+            long initialDelay = this.scheduledExecutionTime.getTime() - System.currentTimeMillis();
+            this.currentFuture = this.executor.schedule(this, initialDelay, TimeUnit.MILLISECONDS);
+            return this;
+        }
+    }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;问题来了，这块代码只看到了执行一次任务，那么后续的任务是怎么触发的？
+看&lt;code&gt;this.executor.schedule(this, initialDelay, TimeUnit.MILLISECONDS)&lt;/code&gt;，这里的ReschedulingRunnable同时也是一个Runnable类，当执行调度时，其&lt;code&gt;runnable()&lt;/code&gt;方法被执行，再看其&lt;code&gt;runnable()&lt;/code&gt;方法&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;@Override
+    public void run() {
+        Date actualExecutionTime = new Date();
+        super.run();
+        Date completionTime = new Date();
+        synchronized (this.triggerContextMonitor) {
+            Assert.state(this.scheduledExecutionTime != null, &quot;No scheduled execution&quot;);
+            this.triggerContext.update(this.scheduledExecutionTime, actualExecutionTime, completionTime);
+            if (!obtainCurrentFuture().isCancelled()) {
+                schedule();
+            }
+        }
+    }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;在runnable()方法中，其&lt;code&gt;schedule()&lt;/code&gt;方法再次被执行，巧妙。如果不用这种方式实现，还可以怎么实现呢？&lt;/p&gt;
+</description>
+        <pubDate>Mon, 28 Aug 2017 14:05:18 +0800</pubDate>
+        <link>https://swa19.github.io//2017/08/28/spring-schedule.html</link>
+        <guid isPermaLink="true">https://swa19.github.io//2017/08/28/spring-schedule.html</guid>
+        
+        <category>Spring</category>
+        
+        
+      </item>
+    
+      <item>
+        <title>github+jekyll搭建个人站点</title>
+        <description>&lt;h1&gt;初始配置&lt;/h1&gt;
+
+&lt;ol&gt;
+&lt;li&gt;安装&lt;br/&gt;
+安装：&lt;code&gt;gem install jekyll&lt;/code&gt;&lt;br/&gt;
+创建站点：&lt;code&gt;jekyll new myblog&lt;/code&gt;&lt;br/&gt;
+如果使用github已经预先建立的repository，可先进入到文件夹下，&lt;code&gt;jekyll new username.github.io --force&lt;/code&gt;
+启动站点：&lt;code&gt;jekyll serve&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;新建文件&lt;br/&gt;
+jekyll的发布的文章放置在_posts文件夹下，需要注意的是命名需要以日期开头，2017-08-28-filename.EXET,其中，EXET为文件后缀名&lt;br/&gt;
+示例如下：&lt;br/&gt;
+新建文件2017-08-28-testFile.md,添加内容如下：&lt;/li&gt;
+&lt;/ol&gt;
+
+
+&lt;pre&gt;&lt;code&gt;---
+layout: default
+title:  &quot;test&quot;
+date:   2017-08-28 01:12:40 +0800
+categories: test
+---
+#test
+test1
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;这里文件头部添加博客的相关设置，设置内容参见：http://jekyll.com.cn/docs/frontmatter/
+修改完成之后，通过&lt;code&gt;jekyll serve&lt;/code&gt;启动本地服务，查看页面效果&lt;br/&gt;
+以上即可完成初始配置&lt;/p&gt;
+
+&lt;h1&gt;进阶&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;如何添加图片&lt;br/&gt;
+在根目录下添加文件夹用于存放图片，如我将文件夹建在&lt;em&gt;include目录下，那么在配置文件中添加&lt;code&gt;include: [&#39;./_include/pic&#39;]&lt;/code&gt;，这样在系统启动时，会将这个文件夹自动加载进&lt;/em&gt;site,然后在markdown文件中引入图片：&lt;code&gt;![](/pic/picName.png)&lt;/code&gt;
+除了引入相对路径，也可以通过全路径来引入图片，只需在引用路径前添加站点地址即可，这种比较简单，但不适合调试和发布，不再介绍。&lt;/li&gt;
+&lt;li&gt;如何设置markdown模板引擎&lt;br/&gt;
+在配置文件_config.yml中添加配置&lt;code&gt;markdown: rdiscount&lt;/code&gt;,其他可选配置参见：http://jekyll.com.cn/docs/extras/&lt;/li&gt;
+&lt;li&gt;其他问题&lt;br/&gt;
+关于换行：markdown通过回车换行后，页面效果无效，可以通过两个空格加换行的方式实现页面的换行效果&lt;/li&gt;
+&lt;/ul&gt;
+
+</description>
+        <pubDate>Mon, 28 Aug 2017 13:51:54 +0800</pubDate>
+        <link>https://swa19.github.io//2017/08/28/jekyll.html</link>
+        <guid isPermaLink="true">https://swa19.github.io//2017/08/28/jekyll.html</guid>
+        
+        <category>tools</category>
+        
+        
+      </item>
+    
+  </channel>
+</rss>
