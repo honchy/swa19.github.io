@@ -6,18 +6,17 @@
 # 'jekyll serve'. If you change this file, please restart the server process.
 
 # Site settings
-title: everyday is a new day
+title: 每日一记
 email: 
 description: > # this means to ignore newlines until "baseurl:"
-  Write an awesome description for your new site here. You can edit this
-  line in _config.yml. It will appear in your document head meta (for
-  Google search results) and in your feed.xml site description.
-baseurl: "" # the subpath of your site, e.g. /blog
-url: "http://yourdomain.com" # the base hostname & protocol for your site
+  做一个好开发
+url: "https://swa19.github.io/" # the base hostname & protocol for your site
 github_username:  swa19
 
 # markdown
 markdown: rdiscount
+
+include: ['./_include/pic']
 
 
 
