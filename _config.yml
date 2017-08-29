@@ -16,7 +16,7 @@ github_username:  swa19
 # markdown
 markdown: rdiscount
 
-include: ['./_include/pic']
+include: ['/_pic']
 
 
 
