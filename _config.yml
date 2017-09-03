@@ -1,4 +1,4 @@
-# Welcome to Jekyll!
+# Welcome to Jekyll!Redcarpet
 #
 # This config file is meant for settings that affect your whole blog, values
 # which you are expected to set up once and rarely need to edit after that.
@@ -14,7 +14,8 @@ url: "https://swa19.github.io/" # the base hostname & protocol for your site
 github_username:  swa19
 
 # markdown
-markdown: kramdown
+markdown: Redcarpet
+
 
 include: ['/_pic']
 
