@@ -36,7 +36,7 @@ sessionStorage.clear();
 ~~~
 
 
-##localStorage
+## localStorage
 
 操作和sessionStorage类似
 
@@ -51,7 +51,7 @@ var data=localStorage.getItem('value');
 localStorate.removeItem('key');
 ~~~ 
 
-#其他
+# 其他
 
 网上找到的一个Cookie，sessionStorage，localStorage的对比，总结的很好  
 
@@ -66,7 +66,7 @@ localStorate.removeItem('key');
 |===
 
   
-#参考：  
+# 参考：  
 [详说 Cookie, LocalStorage 与 SessionStorage](http://jerryzou.com/posts/cookie-and-web-storage/)  
 [Web Storage API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API/Using_the_Web_Storage_API)  
 [Window.localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage)  

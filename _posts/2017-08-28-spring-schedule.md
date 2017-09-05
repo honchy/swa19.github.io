@@ -8,7 +8,8 @@ tags: Spring
 
 SpringSchedule配置简单，并且由于属于Spring框架，可以通过Spring来管理bean的生命周期，从而可以降低编程的复杂度。
 
-#SpringSchedule的使用
+SpringSchedule的使用
+--
 
 以注解配置为例
 
@@ -26,7 +27,8 @@ http://www.springframework.org/schema/task  http://www.springframework.org/schem
 2. 为方法添加@Scheduled注解
 设置定时任务的方式有两种，一种是配置一定的延时时间以固定频率运行，一种是设置scon表达式
 
-#代码分析
+代码分析
+--
 
 ![](/_pic/diagram.png)
 
