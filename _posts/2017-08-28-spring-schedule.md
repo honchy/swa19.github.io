@@ -15,10 +15,10 @@ SpringSchedule配置简单，并且由于属于Spring框架，可以通过Spring
 1. 配置文件中添加配置
 添加相关注解配置：
 
-```
+~~~
 xmlns:task="http://www.springframework.org/schema/task"
 http://www.springframework.org/schema/task  http://www.springframework.org/schema/task/spring-task-3.0.xsd
-```
+~~~
 
 开启定时任务的注解扫描：
 `<task:annotation-driven/>`
@@ -46,7 +46,7 @@ ScheduledTaskRegistrar.scheduleFixedDelayTask实现比较简单，内部通过Ta
 ![](/_pic/SpringSchedule2.png)
 看下ThreadPoolTaskScheduler的schedule方法
 
-```
+~~~
 @Override
 	public ScheduledFuture<?> schedule(Runnable task, Trigger trigger) {
 		ScheduledExecutorService executor = getScheduledExecutor();
@@ -61,11 +61,11 @@ ScheduledTaskRegistrar.scheduleFixedDelayTask实现比较简单，内部通过Ta
 			throw new TaskRejectedException("Executor [" + executor + "] did not accept task: " + task, ex);
 		}
 	}
-```
+~~~
 
 其中的ReschedulingRunnable是一个Runnable的子类，同时也是ScheduledFuture的子类，它的schedule方法如下
 
-```
+~~~
 @Nullable
 	public ScheduledFuture<?> schedule() {
 		synchronized (this.triggerContextMonitor) {
@@ -78,12 +78,12 @@ ScheduledTaskRegistrar.scheduleFixedDelayTask实现比较简单，内部通过Ta
 			return this;
 		}
 	}
-```
+~~~
 
 问题来了，这块代码只看到了执行一次任务，那么后续的任务是怎么触发的？
 看`this.executor.schedule(this, initialDelay, TimeUnit.MILLISECONDS)`，这里的ReschedulingRunnable同时也是一个Runnable类，当执行调度时，其`runnable()`方法被执行，再看其`runnable()`方法
 
-```
+~~~
 @Override
 	public void run() {
 		Date actualExecutionTime = new Date();
@@ -97,6 +97,6 @@ ScheduledTaskRegistrar.scheduleFixedDelayTask实现比较简单，内部通过Ta
 			}
 		}
 	}
-```
+~~~
 
 在runnable()方法中，其`schedule()`方法再次被执行，巧妙。如果不用这种方式实现，还可以怎么实现呢？

@@ -6,9 +6,13 @@ tags: java
 ---
 
 
-这次做一个页面排序的功能，这个页面会展示一个表或几个表联合查询的各个字段，页面提供根据其中的几个字段进行排序的功能，而这样的页面有5个，且这五个页面中需要排序的字段是一样的。通过分析，我把这些排序的字段再次分为两类，一类是不可通过数据库字段做排序的，因为这些字段的排序规则由人工划定优先级，类似[a,f,t]这样，并且这些字段区分度不高；另一类是可通过数据库直接做排序查询的，包括varchar类型，Bigdecimal类型等；同时五个页面中对排序的字段是一样的，所以我可以使用相同的排序规则。分析之后，我决定构造一个抽象的基类，这个基类对外提供一个接口，通过传入搜索条件和排序的字段，返回符合条件的排序后的数据。  
+这次做一个页面排序的功能，这个页面会展示一个表或几个表联合查询的各个字段，页面提供根据其中的几个字段进行排序的功能，而这样的页面有5个，且这五个页面中需要排序的字段是一样的。
 
-```
+通过分析，我把这些排序的字段再次分为两类，一类是不可通过数据库字段做排序的，因为这些字段的排序规则由人工划定优先级，类似[a,f,t]这样，并且这些字段区分度不高；另一类是可通过数据库直接做排序查询的，包括varchar类型，Bigdecimal类型等；同时五个页面中对排序的字段是一样的，所以我可以使用相同的排序规则。
+
+分析之后，我决定构造一个抽象的基类，这个基类对外提供一个接口，通过传入搜索条件和排序的字段，返回符合条件的排序后的数据。  
+
+~~~
 public abstract class DataQueryService<T extends AbstractSearchConditon> {  
  protected List<String> sortKeys = Lists.newArrayList("COLUMN1", "COLUMN2", "COLUMN3", "COLUMN4");
     public List queryBoxDataByCondition(T queryCondition) {
@@ -18,11 +22,11 @@ public abstract class DataQueryService<T extends AbstractSearchConditon> {
             return queryDataByConditionwithIndex(queryCondition);
         }
     }
-``` 
+~~~
  
 sortKeys这个列表中包含的时需要做内存排序的排序字段，queryDataByConditionwithoutIndex方法实现查询数据并在内存中排序；queryDataByConditionwithIndex实现数据查询，排序通过数据库排序来实现。由于不同的页面的数据是通过查询不同的数据表来展示的，那么各个不同页面的查询方法通过实现这两个方法来完成。  
 
-```
+~~~
 @Service
 public class APageDataQueryServiceImpl extends DataQueryService<APageSearchConditon> {
     @Override
@@ -34,11 +38,11 @@ public class APageDataQueryServiceImpl extends DataQueryService<APageSearchCondi
     //todo
     }
 }
-```
+~~~
 
 完成第一个子类APageDataQueryServiceImpl的两个方法之后，继续其他页面时会发现不管是哪个页面，在内存中的排序规则也是一致的，区别只在于从数据库中查询数据的数据表不一样，于是又有了对基类的再次改造。
 
-```
+~~~
 public abstract class DataQueryService<T extends AbstractSearchConditon> {
  protected List<String> sortKeys = Lists.newArrayList("COLUMN1", "COLUMN2", "COLUMN3", "COLUMN4");
 
@@ -109,7 +113,7 @@ public abstract class DataQueryService<T extends AbstractSearchConditon> {
 
 }
 
-```
+~~~
 
 通过这样一个抽象之后，各个页面的查询子类只需要实现基类中的三个方法即可完成按照指定字段进行查询数据并排序的功能。  
 另外是写代码的过程中，发现的现有代码的问题。现有的项目架构没有一个统一的规划，各个页面的操作其实有很多共通的地方，例如这次为了添加排序规则，我把各个页面的查询类QueryCondition的公共参数抽象到了一个基类中，从而实现了数据查询功能的代码抽象和复用，一方面减少了代码量，另一方面扩展性更好，后续也有利于开发维护。  
