@@ -15,7 +15,8 @@ github_username:  swa19
 
 # markdown
 markdown: kramdown
-
+kramdown:
+  input: GFM
 
 include: ['/_pic']
 
