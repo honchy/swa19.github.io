@@ -72,7 +72,5 @@ localStorate.removeItem('key');
 [Window.localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage)  
 [Window.sessionStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage)  
 
->* 同样是码字，为什么码代码很轻松，码起文档来却简直要要了我的命？？？  
->* 才发现不同的markdown引擎居然支持的格式各有差别，本地wiz笔记编辑好的文档，发上去之后格式全乱了。各种引擎试了一遍，没有一个全部支持我用的特性的，现在选了Redcarpet，默认不支持表格，等有时间再研究下它的插件吧
 
 
