@@ -6,10 +6,10 @@
 # 'jekyll serve'. If you change this file, please restart the server process.
 
 # Site settings
-title: 每日一记
+title: 懂得，也要会表达
 email: 
 description: > # this means to ignore newlines until "baseurl:"
-  做一个好开发
+  我不是个伟大的程序员，我只是个有着一些优秀习惯的好程序员--by Kent Beck
 url: "https://swa19.github.io/" # the base hostname & protocol for your site
 github_username:  swa19
 
