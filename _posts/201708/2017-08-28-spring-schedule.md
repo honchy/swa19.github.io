@@ -1,7 +1,8 @@
 ---
 layout: post
-title:  "SpringSchedule详解"
+title:  "SpringSchedule"
 date:   2017-08-28 14:05:18 +0800
+categories： 框架
 tags: Spring
 ---
 
