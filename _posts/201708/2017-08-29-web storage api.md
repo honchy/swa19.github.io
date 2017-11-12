@@ -2,7 +2,7 @@
 layout: post
 title: "web storage api"
 date: 2017-09-03 22:49:03 +0800
-categories： 基础
+categories: 基础
 tags: web
 ---
 

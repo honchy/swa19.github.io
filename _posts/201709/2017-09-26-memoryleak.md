@@ -2,7 +2,7 @@
 layout: post
 title: "OutOfMemoryError"
 date: 2017-09-26 09:07:03 +0800
-categories： 基础
+categories: 基础
 tags: java
 ---
 

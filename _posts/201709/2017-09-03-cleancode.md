@@ -2,7 +2,7 @@
 layout: post
 title: "cleanCode"
 date: 2017-09-03 23:00:42 +0800
-categories： 基础
+categories: 基础
 tags: java
 ---
 
