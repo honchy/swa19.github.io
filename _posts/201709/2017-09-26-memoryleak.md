@@ -15,7 +15,7 @@ tags: java
 那么当一个对象已经不再使用，但它的引用依旧被其他对象持有的时候就容易发生内存泄露。  
 jdk提供了一个很好的可视化工具，在jkd的bin目录下有一个可执行程序：jvisualvm（windows系统双击打开，ubuntu系统在控制台中执行:`./jvisualvm`）  
 打开后左侧显示目前运行的java程序，双击打开一个java应用，在Monitor中显示了各个系统参数，观察对应的内存区域所占用的空间是否在不断上升。如果目前占用的内存空间和已经达到最大内存空间，首先尝试提高最大内存配置，根据开发环境的不同，配置方式会存在区别。
-![](/_pic/2017-10-09/visualvm.png)
+![](/_pic/201710/visualvm.png)
 如果已经提高了最大内存配置，而应用所占用的空间依旧在上升，这时候要排查下是否存在内存泄露的情况。  
 查找内存泄露有很多方法，目前也存在一些成熟的商业软件。我简单总结下使用jdk自带的几个工具排查。  
 
@@ -39,9 +39,9 @@ jdk提供了一个很好的可视化工具，在jkd的bin目录下有一个可�
 ## 问题解决过程
 出现“java.lang.OutOfMemoryError: PermGen space”的问题时，启动jvisualvm，查看PemGen的内存展示显示最大80M，已使用80M，于是首先尝试修改最大PermSpace的大小。我的开发环境是IDEA+Tomcat，首先按照网上的资料修改Tomcat安装目录下的bin/catalina.sh文件，添加配置：`JAVA_OPTS="$JAVA_OPTS -Xms512m -Xmx1024m -XX:PermSize=256M -XX:MaxPermSize=512m"`，但是配置并未生效，在visualvm中显示最大内存依旧是80M。  
 其实可以理解，因为IDEA在运行Web应用时，每个应用会新建一个Tomcat实例（实例配置在IDEA的安装目录下），所以修改Tomcat的配置，对启动的Web服务是不会生效的。这点通过IDEA启动Web服务的日志中也可以看到，
-![](/_pic/2017-10-09/log.PNG)
+![](/_pic/201710/log.PNG)
 
 其中显示的CATALINA_BASE目录在IDEA的配置路径下，我在对应的目录下并没有找到catalina.sh文件，好在IDEA的应用配置中有一个“VM options”，配置后，visualvm中显示的最大内存得到了更新。重启应用后，内存不足的问题消失。
-![](/_pic/2017-10-09/vm.PNG)
+![](/_pic/201710/vm.PNG)
 
 这个内存不足问题不是由于内存泄露引起的，没有机会能够做进一步的实际排查。
