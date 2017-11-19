@@ -81,12 +81,6 @@ basicExercise.spi.BaseImpl1
 
 运行main方法，控制台打印`base1`,说明print执行的是BaseImpl1中的方法。试想如果需要增加一个BaseImpl3的print方法，那么只需要修改资源文件中的basicExercise.spi.Base中文件内容即可，系统中无需做代码修改，这种扩展方式在工程项目中是非常借鉴的。在Dubbo中，提供了多种注册中心，如果未来增加了一个注册中心，Dubbo代码中只需要引入新的jar包即可，Dubbo的调用中如果需要使用未来的这个注册中心，也只需要以原有的方式配置register即可，这就体现了高扩展性
 
-# jdk 实现原理
-以上对SPI的应用使用的是jdk提供的工具类ServiceLoader，
-
-
-# Dubbo对SPI的扩展
-
 
 
 
