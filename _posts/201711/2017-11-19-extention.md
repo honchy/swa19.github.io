@@ -345,7 +345,9 @@ loadFile负责从指定的资源文件中，解析资源文件的配置，加载
 ~~~
 判断类实现上是否标注Adaptive注解，如果标注了注解，将这个类作为适配类暂存，否则通过字节码生成适配类。生成适配类的过程通过`public T getAdaptiveExtension()`实现。
 类ExtensionFactory也标注了SPI注解，是一个扩展点，它的扩展类包括了以下三个：
-![](_pic/201711/ExtensionFactory.png)
+
+![](/_pic/201711/ExtensionFactory.png)
+
 其中的`AdaptiveExtensionFactory`就标注了Adaptive注解。
 对没有标注了Adaptive注解的实现类，对其做实例化的时候，需要对它生成一个新的字节码，并使用这个新生成的字节码做实例化。在生成字节码的时候，做的工作是：对于标注了Adaptive注解的方法，会寻找对应的扩展类并作为参数传入set方法。
 
