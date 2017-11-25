@@ -6,15 +6,15 @@ categories: 基础
 tags: java
 ---
 
-昨天看Dubbo中关于服务注册和管理部分的时候，接触到了java的扩展机制，了解下实现方式，后边自己写框架的时候也能用下
+昨天看Dubbo中关于服务注册和管理部分的时候，接触到了SPI的概念，了解下java的扩展机制。
 
 # SPI解决了什么问题
 
-根据昨天对Dubbo代码的跟踪，SPI可以根据配置动态选择实现的子类，并对子类做注入。如果没有这种机制的话需要怎么实现呢？
+在上次看Dubbo中关于zookeeper注册中心的实现的时候，使用了SPI扩展机制，可以根据配置动态选择实现的子类，从而实现。如果服务的扩展。那么如果不使用这种机制的话要怎么实现呢？
 为了避免调用者了解实现细节，不能将bean注入的事情交给调用者去做，所以可行的方式是调用者做配置，服务提供者根据配置对类做注入。
 那么在根据配置做注入的时候，一种是if-else，这种硬编码的方式不利于做扩展，后边每次新增一个实现类的话，都需要修改代码；另一种是把每个子类的都事先做实例化，这样根据配置可以获取到对应的bean，但是如果一个子类的实例化开销比较大，这种方式就变得可行度不高了。
 所以，SPI做了什么呢？SPI是ServiceProviderInterfaces的简称，也就是服务提供接口，通过SPI服务，在需要扩增基类的接口的时候，只需要在jar包的资源文件下增加一个指定子类的文件即可，对原有的模块没有任何其他影响。
-首先看一下简单的demo
+首先看一下简单的demo：
 创建一个基类和两个实现类
 
 ~~~
@@ -79,16 +79,17 @@ basicExercise.spi.BaseImpl1
     }
 ~~~
 
-运行main方法，控制台打印`base1`,说明print执行的是BaseImpl1中的方法。试想如果需要增加一个BaseImpl3的print方法，那么只需要修改资源文件中的basicExercise.spi.Base中文件内容即可，系统中无需做代码修改，这种扩展方式在工程项目中是非常借鉴的。在Dubbo中，提供了多种注册中心，如果未来增加了一个注册中心，Dubbo代码中只需要引入新的jar包即可，Dubbo的调用中如果需要使用未来的这个注册中心，也只需要以原有的方式配置register即可，这就体现了高扩展性
+运行main方法，控制台打印`base1`,说明print执行的是BaseImpl1中的方法。试想如果需要增加一个BaseImpl3的print方法，那么只需要修改资源文件中的basicExercise.spi.Base中文件内容即可，系统中无需做代码修改，这种扩展方式在工程项目中是非常借鉴的。在Dubbo中，提供了多种注册中心，如果未来增加了一个注册中心，Dubbo代码中只需要引入新的jar包即可，Dubbo的调用中如果需要使用未来的这个注册中心，也只需要以原有的方式配置register即可，这就体现了高扩展性。
 
 # jdk 实现原理
-以上对SPI的应用使用的是jdk提供的工具类ServiceLoader，这个类有两个约定好的规则
+以上对SPI的应用使用的是jdk提供的工具类ServiceLoader，这个类有三个约定好的规则：
 1. 资源文件要放置在“META-INF/services/”文件夹下
 2. 资源文件的命名需要按照基类的class全称命名，如示例中的“basicExercise.spi.Base”
 3. 资源文件中添加的内容为加载的子类的class全名，且不可换行
 在调用Service.load(Class class)方法主要做了两件事情：
 1. 初始化ServiceLoader
 2. 对遍历器做初始化，在s.hasNext遍历时，加载资源文件：
+
 ~~~
         private boolean hasNextService() {
             if (nextName != null) {
@@ -115,8 +116,10 @@ basicExercise.spi.BaseImpl1
             return true;
         }
 ~~~
+
 其中`ClassLoader.getSystemResources(fullName)`会根据拼接好的资源文件名查找资源文件，并通过`nextName = pending.next();`获取到资源文件中设定的子类的名称
 接下来，示例代码中的`next()`方法获取到子类的实例
+
 ~~~
         private S nextService() {
             if (!hasNextService())
@@ -146,11 +149,199 @@ basicExercise.spi.BaseImpl1
             throw new Error();          // This cannot happen
         }
 ~~~
+
 `S p = service.cast(c.newInstance())`把原有的基类的实例映射成为子类的实例，最终返回的`Base ss = s.next()`ss对象就成为了设定好的子类的实例。
 
 # Dubbo对SPI的扩展
 Dubbo中对jdk的扩展机制做了进一步的扩展，整体的实现位于`com.alibaba.dubbo.common.extension`包下
 做加载工作的类为`ExtensionLoader`
+要使用Dubbo做分布式调用，需要在配置文件配置Provider和Consumer的相关信息，以下仅以Provider注册中心的配置和解析为例，梳理下Dubbo对SPI的实现
+
+~~~
+    <dubbo:application name="demo-provider"/>
+    <dubbo:registry address="multicast://224.5.6.7:1234"/>
+    <dubbo:protocol name="dubbo" port="20880"/>
+    <dubbo:service interface="com.alibaba.dubbo.demo.DemoService" ref="demoService"/>
+    <bean id="demoService" class="com.alibaba.dubbo.demo.provider.DemoServiceImpl"/>
+~~~
+
+在引用了Dubbo服务的项目启动时，类`DubboNamespaceHandler`对xml中的配置信息做加载和解析，将各个配置解析到对应的类实体中。
+主要看下对`dubbo:protocol`元素的解析
+
+~~~
+                                else if ("protocol".equals(property)
+                                        && ExtensionLoader.getExtensionLoader(Protocol.class).hasExtension(value)
+                                        && (!parserContext.getRegistry().containsBeanDefinition(value)
+                                        || !ProtocolConfig.class.getName().equals(parserContext.getRegistry().getBeanDefinition(value).getBeanClassName()))) {
+                                    if ("dubbo:provider".equals(element.getTagName())) {
+                                        logger.warn("Recommended replace <dubbo:provider protocol=\"" + value + "\" ... /> to <dubbo:protocol name=\"" + value + "\" ... />");
+                                    }
+                                    // 兼容旧版本配置
+                                    ProtocolConfig protocol = new ProtocolConfig();
+                                    protocol.setName(value);
+                                    reference = protocol;
+                                } 
+~~~
+
+其中的`ExtensionLoader.getExtensionLoader(Protocol.class).hasExtension(value)`就是Dubbo中的SPI机制
+`ExtensionLoader.getExtensionLoader(Protocol.class)`以`Protocol.class`初始化一个ExtensionLoader，并以`Protocol.class`为KEY，这个ExtensionLoader为VALUE存入ConcurrentMap<Class<?>, ExtensionLoader<?>>中，并将这个ExtensionLoader对象返回。`ExtensionLoader.hasExtension(value)`做的动作就多了。
+
+~~~
+public boolean hasExtension(String name)——>
+private Class<?> getExtensionClass(String name)——>
+private Map<String, Class<?>> getExtensionClasses()——>
+private Map<String, Class<?>> loadExtensionClasses()——>
+private void loadFile(Map<String, Class<?>> extensionClasses, String dir)
+~~~
+
+loadFile负责从指定的资源文件中，解析资源文件的配置，加载初始化扩展的子类。
+如对`zookeeper=com.alibaba.dubbo.registry.zookeeper.ZookeeperRegistryFactory`的配置，在返回的extensionClasses中，key为zookeeper，对应的value为ZookeeperRegistryFactory.class。如此完成注册中心扩展模块的初始化和加载。
+
+再来详细看下最关键的两个接口实现
+
+~~~
+    // 此方法已经getExtensionClasses方法同步过。
+    private Map<String, Class<?>> loadExtensionClasses() {
+        final SPI defaultAnnotation = type.getAnnotation(SPI.class);
+        if (defaultAnnotation != null) {
+            String value = defaultAnnotation.value();
+            if (value != null && (value = value.trim()).length() > 0) {
+                String[] names = NAME_SEPARATOR.split(value);
+                if (names.length > 1) {
+                    throw new IllegalStateException("more than 1 default extension name on extension " + type.getName()
+                            + ": " + Arrays.toString(names));
+                }
+                if (names.length == 1) cachedDefaultName = names[0];
+            }
+        }
+
+        Map<String, Class<?>> extensionClasses = new HashMap<String, Class<?>>();
+        loadFile(extensionClasses, DUBBO_INTERNAL_DIRECTORY);
+        loadFile(extensionClasses, DUBBO_DIRECTORY);
+        loadFile(extensionClasses, SERVICES_DIRECTORY);
+        return extensionClasses;
+    }
+~~~
+
+对标注了@SPI注解的类，且SPI的value不为空的，会将value指定的值做默认值。所以在RegistryFactory的定义中可以看到，这里设定了默认的注册中心
+
+~~~
+    private void loadFile(Map<String, Class<?>> extensionClasses, String dir) {
+        String fileName = dir + type.getName();
+        try {
+            Enumeration<java.net.URL> urls;
+            ClassLoader classLoader = findClassLoader();
+            if (classLoader != null) {
+                urls = classLoader.getResources(fileName);
+            } else {
+                urls = ClassLoader.getSystemResources(fileName);
+            }
+            if (urls != null) {
+                while (urls.hasMoreElements()) {
+                    java.net.URL url = urls.nextElement();
+                    try {
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream(), "utf-8"));
+                        try {
+                            String line = null;
+                            while ((line = reader.readLine()) != null) {
+                                final int ci = line.indexOf('#');
+                                if (ci >= 0) line = line.substring(0, ci);
+                                line = line.trim();
+                                if (line.length() > 0) {
+                                    try {
+                                        String name = null;
+                                        int i = line.indexOf('=');
+                                        if (i > 0) {
+                                            name = line.substring(0, i).trim();
+                                            line = line.substring(i + 1).trim();
+                                        }
+                                        if (line.length() > 0) {
+                                            Class<?> clazz = Class.forName(line, true, classLoader);
+                                            if (!type.isAssignableFrom(clazz)) {
+                                                throw new IllegalStateException("Error when load extension class(interface: " +
+                                                        type + ", class line: " + clazz.getName() + "), class "
+                                                        + clazz.getName() + "is not subtype of interface.");
+                                            }
+                                            if (clazz.isAnnotationPresent(Adaptive.class)) {
+                                                if (cachedAdaptiveClass == null) {
+                                                    cachedAdaptiveClass = clazz;
+                                                } else if (!cachedAdaptiveClass.equals(clazz)) {
+                                                    throw new IllegalStateException("More than 1 adaptive class found: "
+                                                            + cachedAdaptiveClass.getClass().getName()
+                                                            + ", " + clazz.getClass().getName());
+                                                }
+                                            } else {
+                                                try {
+                                                    clazz.getConstructor(type);
+                                                    Set<Class<?>> wrappers = cachedWrapperClasses;
+                                                    if (wrappers == null) {
+                                                        cachedWrapperClasses = new ConcurrentHashSet<Class<?>>();
+                                                        wrappers = cachedWrapperClasses;
+                                                    }
+                                                    wrappers.add(clazz);
+                                                } catch (NoSuchMethodException e) {
+                                                    clazz.getConstructor();
+                                                    if (name == null || name.length() == 0) {
+                                                        name = findAnnotationName(clazz);
+                                                        if (name == null || name.length() == 0) {
+                                                            if (clazz.getSimpleName().length() > type.getSimpleName().length()
+                                                                    && clazz.getSimpleName().endsWith(type.getSimpleName())) {
+                                                                name = clazz.getSimpleName().substring(0, clazz.getSimpleName().length() - type.getSimpleName().length()).toLowerCase();
+                                                            } else {
+                                                                throw new IllegalStateException("No such extension name for the class " + clazz.getName() + " in the config " + url);
+                                                            }
+                                                        }
+                                                    }
+                                                    String[] names = NAME_SEPARATOR.split(name);
+                                                    if (names != null && names.length > 0) {
+                                                        Activate activate = clazz.getAnnotation(Activate.class);
+                                                        if (activate != null) {
+                                                            cachedActivates.put(names[0], activate);
+                                                        }
+                                                        for (String n : names) {
+                                                            if (!cachedNames.containsKey(clazz)) {
+                                                                cachedNames.put(clazz, n);
+                                                            }
+                                                            Class<?> c = extensionClasses.get(n);
+                                                            if (c == null) {
+                                                                extensionClasses.put(n, clazz);
+                                                            } else if (c != clazz) {
+                                                                throw new IllegalStateException("Duplicate extension " + type.getName() + " name " + n + " on " + c.getName() + " and " + clazz.getName());
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    } catch (Throwable t) {
+                                        IllegalStateException e = new IllegalStateException("Failed to load extension class(interface: " + type + ", class line: " + line + ") in " + url + ", cause: " + t.getMessage(), t);
+                                        exceptions.put(line, e);
+                                    }
+                                }
+                            } // end of while read lines
+                        } finally {
+                            reader.close();
+                        }
+                    } catch (Throwable t) {
+                        logger.error("Exception when load extension class(interface: " +
+                                type + ", class file: " + url + ") in " + url, t);
+                    }
+                } // end of while urls
+            }
+        } catch (Throwable t) {
+            logger.error("Exception when load extension class(interface: " +
+                    type + ", description file: " + fileName + ").", t);
+        }
+    }
+
+~~~
+
+对标注了Adaptive的方法，对其中的set方法的参数会做自动赋值。
+
+在代码中有一个代码实现方式很特别，每次获取一个变量的时候，首先判断是否为空，如果为空，则做相关的初始化动作。这种实现方式的好处是节省了内存，避免存储过多信息；另一个是懒加载，避免了一开始做太多初始化工作。另外看代码的时候会觉得很乱，如loadFile方法在多处被调用，看起来很乱，但在运行的时候，这种处理方式可以保证初始化工作只做一次。可能是实现流程太复杂了，已经理不清楚调用顺序了，所以索性采用了这种保险的方式吧，这种处理还是可以借鉴下的。
+JDK的这种扩展方式很巧妙，通过把配置信息放入到配置文件中，避免了代码的硬编码，动态实现加载对原有代码没有侵入。以后设计系统可以多多采用这种扩展方式。
+
+
 
 
 
