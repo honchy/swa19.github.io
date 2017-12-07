@@ -2,6 +2,7 @@
 
 小结：cleanCode
 工具：jekyll，idea
-基础：java，mysql，linux，web
+基础：java，mysql，linux，web，ops
 框架：netty，spring，dubbo，netty
+
 
