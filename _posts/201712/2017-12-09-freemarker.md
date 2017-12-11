@@ -1,9 +1,9 @@
 ---
 layout: post
-title:  "Nginx"
-date:   2017-11-26 16:45:03 +0800
+title:  "Freemarker配置与使用"
+date:   2017-12-09 15:56:20 +0800
 categories: 基础
-tags: ops
+tags: web
 ---
 
 又要做页面了，这次决定好好学习前端相关的东西，认真做个好看的页面。上次做会议预定系统（manage）的时候用过的Freemarker现在已经忘的差不多了，这次从头到尾再总结一次。
