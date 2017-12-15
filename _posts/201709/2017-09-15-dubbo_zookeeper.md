@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Dubbo-Zookeeper"
+title:  "Dubbo之使用Zookeeper做服务治理"
 date:   2017-09-15 +0800
 categories: 框架
 tags: dubbo

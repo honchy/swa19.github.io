@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "OutOfMemoryError"
+title: "JAVA之内存溢出的排查和解决"
 date: 2017-09-26 09:07:03 +0800
 categories: 基础
 tags: java

@@ -1,26 +1,24 @@
 ---
 layout: post
-title:  "Zookeeper"
+title:  "Zookeeper学习总结"
 date:   2017-12-09 15:56:20 +0800
 categories: 框架
 tags: zookeeper
 ---
 
-理一下ZooKeeper相关的东西
-
 # ZooKeeper可以做什么
-
+ZooKeeper用来做什么：Zookeeper 是分布式服务框架，主要是用来解决分布式应用中经常遇到的一些数据管理问题，如：统一命名服务、状态同步服务、集群管理、分布式应用配置项的管理等等。
 首先ZooKeeper用于分布式应用管理，要了解ZooKeeper的特性，首先要考虑分布式系统设计的痛点在哪里？
-分布式系统就是将一个应用部署在多个物理机器上，对外提供统一的服务。这种部署方式存在问题：
+分布式系统就是将一个应用部署在多个物理机器上，对外提供统一的服务。这种系统设计会遇到的问题有：
 1. 扩展问题
 当需要添加或减少服务器时，需要修改相关配置
 2. 故障处理
 当一台机器出现问题的时候，能及时下线该服务，避免请求继续指向这台已经挂掉的服务器上
-ZooKeeper提供了管理这些物理机器的功能，并
-Zookeeper用于分布式系统的开发，那么它具备了哪些特性，简化了分布式开发
-分布式系统设计中的问题：
-分布式系统设计中广泛采用的系统架构：主从架构。主从架构需要考虑的问题：主节点崩溃；从节点崩溃；主从节点间发生通信故障
+ZooKeeper提供了动态管理机器的功能，Zookeeper的系统架构为
+![](/_pic/201711/zookeeper-struct.jpeg)
+当服务启动时，自动向注册中心注册节点，ｃｌｉｅｎｔ端则从注册中心获取可用的服务器信息；同时注册中心会定时向服务器发送心跳消息，及时删除无响应的服务节点信息．
 
+分布式系统设计中广泛采用的系统架构：主从架构。主从架构需要考虑的问题：主节点崩溃；从节点崩溃；主从节点间发生通信故障
 
 ZooKeeper相关
 ZooKeeper数据的存储结构
@@ -33,7 +31,6 @@ ZooKeeper的服务器端运行模式：独立模式和仲裁模式，对于仲�
 
 
 ##ZooKeeper的集群管理
-ZooKeeper用来做什么：Zookeeper 是分布式服务框架，主要是用来解决分布式应用中经常遇到的一些数据管理问题，如：统一命名服务、状态同步服务、集群管理、分布式应用配置项的管理等等。
 使用ZooKeeper服务，首先需要实例化一个ZooKeeper的实例client，一旦获得一个server的连接，一个sessionId会被分配给client，之后，client会持续发送心跳给server，来维护这个session。只要这个连接有效，应用都可以通过client获得Zookeeper的API。若client在一定时间内未发送心跳，server会将这个session置为失效。若client当前连接的server无响应，若session仍旧有效，client会自动尝试重连另一个server。
 当集群中半数以上的机器同时挂掉，则，整个集群不可用；当leader挂掉，当半数以上的follower选举同意时，某server被选举为leader。由于ZooKeeper的写入首先需要通过Leader，然后这个写入的消息需要传播到半数以上的Fellower通过才能完成整个写入。所以整个集群写入的性能无法通过增加服务器的数量达到目的，相反，整个集群中Fellower数量越多，整个集群写入的性能越差；ZooKeeper集群中的每一台服务器都可以提供数据的读取服务，所以整个集群中服务器的数量越多，读取的性能就越好。但是Fellower增加又会降低整个集群的写入性能。为了避免这个问题，可以将ZooKeeper集群中部分服务器指定为Observer。observers不参与投票，只监听投票结果。除了这个区别之外，其他的功能和followers一样：客户端可以连接服务器，病向服务器发送、读取、写入请求。由于observers不参与投票，所以observers挂掉或者跟集群连接中断，不会影响到ZooKeeper服务。observer可用于：1。跨数据中心部署，由于observer可以的部署对网络要求不高，可以跟client部署在一个数据中心，从而提高读取速度。observer不参与投票，降低了写入的网络开销。2. 对读进行扩展，同时不影响写入性能。但observer的使用不能消除数据中心之间的网络延时，因为observer需要把更新请求转发到另一个数据中心的leader，处理inform消息，当网络速度极慢的话也会影响数据的同步。
 设置observer：在要充当observer节点的机器配置中添加：peerType=observer。然后，在每一个服务器配置文件中，添加observer，如：server.1:localhost:2181:3181:observer。这样用来告知ZooKeeper集群，这台server1是observer。

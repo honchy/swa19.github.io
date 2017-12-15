@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "java线程池"
+title:  "JAVA线程池"
 date:   2017-09-06 17:01:38 +0800
 categories: 基础
 tags: java

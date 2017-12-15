@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "coding的坑"
+title: "开发遇到过的JAVA坑"
 date: 2017-09-07 16:49:48 +0800
 categories: 基础
 tags: java
@@ -15,6 +15,33 @@ tags: java
 # java引用
 对变量做临时赋值后，后续在用的时候没有恢复成原有的值   
 由于java中的变量传递的是变量的引用，所以在方法内对一个变量做的改变在这个方法调用结束之后会继续保留，这个错误很弱智，但也很容易被忽略
+
+# static变量
+对于一个类中定义的static变量，这个变量在多个类实例中共用。看一个类的定义:
+
+~~~
+public class ScheduleJobList {
+    private static final Logger logger = LoggerFactory.getLogger(ScheduleJobList.class);
+    private  static PriorityBlockingQueue<JobInfoWrapper> list;
+}
+~~~
+
+使用时：
+
+~~~
+    public static void addRegisteredJob(String jobInfoStr) {
+        Map<JobInfo, ScheduleJobList> jobMap = new ConcurrentHashMap<JobInfo, ScheduleJobList>();
+        JobScheduleParser.ScheduleMsgBody msg = JSON.parseObject(jobInfoStr, JobScheduleParser.ScheduleMsgBody.class);
+        ScheduleJobList scheduleJobList = new ScheduleJobList();
+        scheduleJobList.addJob(JobInfoWrapper.newWrapperJob(msg.getNewJob()));//将当前需要执行的任务添加到任务列表中
+        jobMap.remove(msg.getOldJob());
+        jobMap.put(msg.getNewJob(), scheduleJobList);
+    }
+~~~
+
+问题是，当我对一个JobInfo实例的ScheduleJobList做了dequeue操作，其他JobInfo实例的ScheduleJobList中的数据也会减少，一开始百思不得其解，直到看ScheduleJobList类的时候注意到static关键词，才恍然大悟。
+static关键词修饰的静态变量只会保存在一个内存空间，当需要它在各个类中不共享的时候，坑就出现了。
+
 
 
 

@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "StringBuilder&StringBuffer"
+title:  "String，StringBuilder和StringBuffer比较"
 date:   2017-12-11 18:42:58 +0800
 categories: 基础
 tags: java
