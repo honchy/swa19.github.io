@@ -3,7 +3,7 @@ layout: post
 title: "开发遇到过的MYSQL坑"
 date: 2017-09-03 22:49:03 +0800
 categories: 基础
-tags: MySQL
+tags: mysql
 ---
 
 在Java开发中，数据存储大多使用的是MySQL，这里记录下开发过程中使用MySQL出现的问题，总结教训，避免再次出现问题。

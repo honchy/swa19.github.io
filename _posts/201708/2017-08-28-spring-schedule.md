@@ -3,7 +3,7 @@ layout: post
 title:  "SpringSchedule"
 date:   2017-08-28 14:05:18 +0800
 categories: 框架
-tags: Spring
+tags: spring
 ---
 
 SpringSchedule配置简单，并且由于属于Spring框架，可以通过Spring来管理bean的生命周期，从而可以降低编程的复杂度，但是SpringSchedule有个问题，就是不支持分布式系统，也就是假如一个项目部署在多台服务器上，那么定时任务会在多台服务器上同时执行，需要自行做分布式控制。
