@@ -31,6 +31,7 @@ StoreLoad屏障：
 抽象场景：Store1; StoreLoad; Load2
 在Load2读取操作执行前，保证Store1的写入对所有处理器可见。StoreLoad屏障的开销是四种屏障中最大的。
 
+对于volatile修饰的变量，更新时使用jdk的native方法，compareAndSet，保证了更新操作的原子性。
 
 # ReentrantLock
 把锁的实现作为一个java类，而不是语言特性来实现,通过这种方式可以提供更多的锁的特性。
