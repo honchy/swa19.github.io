@@ -6,6 +6,11 @@ categories: 基础
 tags: java
 ---
 
+# 循环中的continue和break
+前几天出的一个线上问题,符合条件的数据有3000条,但实际插入到数据库的只有两条.最后查看代码发现这批数据通过for循环插入,而在这个循环中,一个判断条件中增加了`break`导致循环中断.
+所以对于循环中出现break和continue的,一定要重点检查下是否符合业务逻辑.
+
+
 # RocketMqsubject和tag配置问题导致消息重复发送
 在A系统中会发送给B系统一个RocketMq消息，B系统在接收到这个消息之后，发送消息给C系统  
 根据日志，ProducerA发送了一条消息，但是到ConsumerB的之后，首先接收到和Producer发送消息一样的msgId的消息，然后不断刷日志，显示ConsumerB持续不断地接收到同样消息内容，但是msgId不同的消息。  
