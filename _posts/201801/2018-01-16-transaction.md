@@ -7,6 +7,7 @@ tags: java
 ---
 
 前几天线上出现了一个问题.在做一个操作的时候,发现一条数据的状态值不对.
+
 ~~~
 	@Override
 	@Transactional(noRollbackFor = CollectionException.class)
@@ -80,7 +81,7 @@ tags: java
 11:02:40.0     change.unLockOverdueCaseByIds
 11:02:41.0	doCallSummary.updateOverDueCaseByDataSource
 
-所以这个问题就归结为了更新前读到的不是最新数据,导致最新数据被覆盖的问题.
+所以据此可以定位问题原因为:更新前读到的不是最新数据,导致最新数据被覆盖.
 
 那么怎么解决这个问题呢?首先考虑的是要加锁,保证同时只有一个线程对数据做更新操作;另一个是更新之前再次读取数据.
 所以做出的更改为,将`queryOverdueCaseByIds`的查询sql改为`selectforupadte`.
@@ -88,7 +89,12 @@ tags: java
 
 1. spring类内的方法调用导致事务不生效
 selectforupdate会对选定的数据加锁,且直到事务提交或回滚的时候才会释放锁.但是测试过程中发现添加之后这个锁并不会释放,导致测试的另一个线程一直被阻塞.检查代码后发现存在类内的方法互相调用的情况.
-也就是A方法和B方法同属于一个类中,A调用B,而B方法上添加了@Transactional注解.
+也就是A方法和B方法同属于一个类中,A调用B,而B方法上添加了@Transactional注解.这个时候这个事务是不生效的.
 
+2. mysql默认的事务隔离级别是readRepeatable
+可以避免脏读和不可重复读,但可能会引起幻读.
 
+找资料的时候看到的一个介绍很详细的关于spring事务管理的介绍:`http://blog.csdn.net/trigl/article/details/50968079`.所以就不当搬运工了
+
+这个问题就告一段落,需要说明的是,数据库的设计很重要,尤其是表设计中的create_time和update_time最好不要有业务含义,而且update_time最好设计成数据库自动更新的,对查找问题很有帮助.而这点上,组内同时认识还不够,为了省力气,有些表直接把update_time设计成了Date类型,且做为业务属性的一个字段,有时候会对分析问题增加一定的难度.
 
