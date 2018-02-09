@@ -9,7 +9,7 @@ header: Posts By Tag
     <div class="col-md-2">
       <div class="sidebar hidden-print" role="complementary">
         <div id="navigation">
-        	<h1>标签</h1>
+        	<h2>标签</h2>
       		<ul class="nav sidenav">
 			  	{% if site.tags.first[0] == null %}
 				  	{% for tag in site.tags %} 
@@ -28,15 +28,13 @@ header: Posts By Tag
       <div class="panel docs-content">
         <div class="wrapper">
           <div class="home">
-
           	{% for tag in site.tags %} 
-			  <h2 id="{{ tag[0] }}-ref">{{ tag[0] }}</h2>
+			  <h3 id="{{ tag[0] }}-ref">{{ tag[0] }}</h3>
 			  <ul>
 			    {% assign pages_list = tag[1] %}  
 			    {% include pages_list %}
 			  </ul>
 			{% endfor %}
-
           </div>
         </div>
       </div>

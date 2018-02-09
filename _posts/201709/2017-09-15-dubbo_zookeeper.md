@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Dubbo之使用Zookeeper做服务治理"
+title:  "Dubbo之服务注册"
 date:   2017-09-15 +0800
 categories: 框架
 tags: dubbo
@@ -204,6 +204,48 @@ public interface RegistryFactory {
         }
     }
 ~~~
+
+最后看下`ZookeeperRegistry`中的注册方法:
+
+~~~
+    @Override
+    public void register(URL url) {
+        if (destroyed.get()){
+            return;
+        }
+        super.register(url);
+        failedRegistered.remove(url);
+        failedUnregistered.remove(url);
+        try {
+            // Sending a registration request to the server side
+            doRegister(url);
+        } catch (Exception e) {
+            Throwable t = e;
+
+            // If the startup detection is opened, the Exception is thrown directly.
+            boolean check = getUrl().getParameter(Constants.CHECK_KEY, true)
+                    && url.getParameter(Constants.CHECK_KEY, true)
+                    && !Constants.CONSUMER_PROTOCOL.equals(url.getProtocol());
+            boolean skipFailback = t instanceof SkipFailbackWrapperException;
+            if (check || skipFailback) {
+                if (skipFailback) {
+                    t = t.getCause();
+                }
+                throw new IllegalStateException("Failed to register " + url + " to registry " + getUrl().getAddress() + ", cause: " + t.getMessage(), t);
+            } else {
+                logger.error("Failed to register " + url + ", waiting for retry, cause: " + t.getMessage(), t);
+            }
+
+            // Record a failed registration request to a failed list, retry regularly
+            failedRegistered.add(url);
+        }
+    }
+~~~
+其中的doRegister将url中包含的接口和地址存放在zk节点上.
+url长类似这样:`url=consumer://ip/interface?application=yooli-provider&category=consumers&check=false&dubbo=2.5.3&group=Yooli&interface=interface&methods=method1,method2&organization=Yooli&owner=bing&pid=28961&reference.filter=cbsChannelFilter&retries=0&revision=1.2.2-SNAPSHOT&side=consumer&timeout=8000&timestamp=1518157342897&version=1.0.0
+`
+
+
 
 最后理下Zookeeper服务的调用链：
 

@@ -9,7 +9,7 @@ header: Posts By Category
     <div class="col-md-2">
       <div class="sidebar hidden-print" role="complementary">
         <div id="navigation">
-        	<h1>类别</h1>
+        	<h2>类别</h2>
       		<ul class="nav sidenav">
 				{% if site.categories.first[0] == null %}
 					{% for category in site.categories %} 
@@ -33,7 +33,7 @@ header: Posts By Category
         <div class="wrapper">
           <div class="home">
 			{% for category in site.categories %} 
-			  <h2 id="{{ category[0] }}-ref">{{ category[0] | join: "/" }}</h2>
+			  <h3 id="{{ category[0] }}-ref">{{ category[0] | join: "/" }}</h3>
 			  <ul>
 			    {% assign pages_list = category[1] %}  
 			    {% include pages_list %}
