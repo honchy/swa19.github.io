@@ -17,7 +17,14 @@ site.baseurl: /
 # markdown
 markdown: kramdown
 kramdown:
-  input: GFM
+  auto_ids:       true
+  entity_output:  as_char
+  toc_levels:     1..6
+  smart_quotes:   lsquo,rsquo,ldquo,rdquo
+  input:          GFM
+  hard_wrap:      false
+  footnote_nr:    1
+  show_warnings:  false
 
 include: ['/_pic']
 
