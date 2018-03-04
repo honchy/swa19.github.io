@@ -15,7 +15,6 @@ url: "https://swa19.github.io/"
 github_username:  swa19
 site.baseurl: /
 # markdown
-#markdown: Redcarpet
 markdown: kramdown
 kramdown:
   auto_ids:       true

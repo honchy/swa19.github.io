@@ -70,3 +70,5 @@ sleep 10
 stderr: error: The requested URL returned error: 401 Unauthorized while accessing http://gitlab.yooli-in.com/YooliRDCenter/YooliAsset/Collection/lixincui.git/info/refs
 ~~~
 原因是git版本太低了（使用了1.7.0），需要升级git版本
+
+参考：http://blog.csdn.net/aeolus_pu/article/details/71628363 
