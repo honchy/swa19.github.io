@@ -32,6 +32,7 @@ matrix=
 [0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0]]
 ~~~
 python：
+
 ~~~
 def set_of_words2_vec(vocab_list, input_set):
     return_vec = [0] * len(vocab_list)
@@ -99,9 +100,48 @@ def train_nb_0(train_mat, class_vec):
     return p0_vect, p1_vect, p_abusive
 ~~~
 
-算法修正
+## 算法修正
 1. 为了计算概率的乘积，消除概率为0的情况
 2. 为了避免过小的浮点数做乘积运算时丧失运算精度，将乘积换做对数的相加。即 a*b<=>loga+logb
+
+使用bayes算法做分类器
+原理：在上一个算法中，根据给定的实验样本，计算出了每个单词属于不同类别的概率。在对一个文档做分类的时候，也就知道了这个文档中的单词属于不同类别的概率，通过对这些概率做相乘（对数相加），获得这篇文档中所有单词分别属于类别0和1的概率，比较这两个概率大小来对文档做分类。
+首先，对于给定的一篇文档，`test_entry = ['love', 'my', 'dalmation']`，将其转换为数组为：`test_vec=[0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0]`，这个test_vec数组的长度等于实验样本中包含的不重复的单词的数量，其中的1代表测试文档中的单词在实验样本中出现的次数。
+通过上一个步骤，我们已经知道了对应于每个单词分别属于类别0和1的概率（p0_vec和p1_vec），所以p0_vec*test_vec可以用来衡量测试文档属于类别0的概率，sum（p0_vec*test_vec）也就是属于类别0的总概率。
+
+python：
+
+~~~
+def train_nb_0(train_matrix, train_category):
+    num_train_docs = len(train_matrix)
+    num_words = len(train_matrix[0])
+    p_abusive = sum(train_category) / float(num_train_docs)  # 代表划分为类别1的样本占总样本的比例（0.5）
+    p0_num = ones(num_words)   #数组用1来填充
+    p1_num = ones(num_words)
+    p0_denom = 2.0
+    p1_denom = 2.0
+    for i in range(num_train_docs):
+        if train_category[i] == 1:
+            p1_num += train_matrix[i]
+            p1_denom += sum(train_matrix[i])
+        else:
+            p0_num += train_matrix[i]
+            p0_denom += sum(train_matrix[i])
+    p1_vect = log(p1_num / p1_denom)    #对概率值取对数
+    p0_vect = log(p0_num / p0_denom)
+    return p0_vect, p1_vect, p_abusive
+
+# p0_vec对应各个单词属于类别0的概率；vec2_classify对应实验样本转换为数字后的数组。p0和p1分别对应各个单词位于类别0和1的概率之和
+def classify_nb(vec2_classify, p0_vec, p1_vec, p_class1):
+    p1 = sum(vec2_classify * p1_vec) + log(p_class1)   以概率对数的相加替换概率的乘积
+    p0 = sum(vec2_classify * p0_vec) + log(1.0 - p_class1)
+    if p1 > p0:
+        return 1
+    else:
+        return 0
+~~~
+
+
 
 
 
