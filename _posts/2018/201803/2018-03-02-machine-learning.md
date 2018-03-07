@@ -141,6 +141,9 @@ def classify_nb(vec2_classify, p0_vec, p1_vec, p_class1):
         return 0
 ~~~
 
+# 逻辑回归
+
+
 
 
 
