@@ -4,6 +4,6 @@
 工具：jekyll，idea,maven
 基础：java，mysql，linux，web，ops,python
 框架：netty，spring，dubbo，netty，zookeeper,redis
-其他：python
+其他：python,other
 
 
