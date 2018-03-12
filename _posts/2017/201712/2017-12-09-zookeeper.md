@@ -6,6 +6,9 @@ categories: 框架
 tags: zookeeper
 ---
 
+* TOC
+{:toc}
+
 # ZooKeeper可以做什么
 ZooKeeper用来做什么：Zookeeper 是分布式服务框架，主要是用来解决分布式应用中经常遇到的一些数据管理问题，如：统一命名服务、状态同步服务、集群管理、分布式应用配置项的管理等等。
 首先ZooKeeper用于分布式应用管理，要了解ZooKeeper的特性，首先要考虑分布式系统设计的痛点在哪里？

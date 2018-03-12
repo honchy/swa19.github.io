@@ -6,6 +6,9 @@ categories: 基础
 tags: mysql
 ---
 
+* TOC
+{:toc}
+
 在Java开发中，数据存储大多使用的是MySQL，这里记录下开发过程中使用MySQL出现的问题，总结教训，避免再次出现问题。
 #CASE-WHEN-THEN
 在使用CASE-WHEN做字段的值转换的时候，如果没有else做最后赋值，在条件均不满足的情况下，mysql会以null赋值给选定的字段。如果不希望字段被赋值为null的话，最好加上在最后加上else做一个对未列出条件的补充。

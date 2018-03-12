@@ -5,6 +5,10 @@ date:   2017-09-15 +0800
 categories: 框架
 tags: dubbo
 ---
+
+* TOC
+{:toc}
+
 Dubbo作为一个分布式的服务框架，注册中心除了zookeeper之外，还包括Redis和dubbo默认注册中心（当不配置注册中心的时候做默认选项，在这个默认的实现中，注册的服务被保存在内存中，Dubbo通过定时重试来监测注册服务是否可用，当注册服务发生变更时，DubboRegistry类负责通知服务变更信息给注册的Listener）。
 
 ![](/_pic/201709/FailbackRegistry.png)

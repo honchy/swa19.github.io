@@ -6,6 +6,10 @@ categories: 基础
 tags: java
 ---
 
+* TOC
+{:toc}
+
+
 # 问题介绍
 最近做项目，遇到了内存溢出的问题：`java.lang.OutOfMemoryError: PermGen space`，第一次遇到这种问题，总结下问题排查方法。  
 

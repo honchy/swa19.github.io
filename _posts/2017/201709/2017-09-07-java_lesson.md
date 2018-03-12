@@ -1,10 +1,68 @@
 ---
 layout: post
-title: "开发遇到过的JAVA坑"
+title: "JAVA开发踩到过的坑"
 date: 2017-09-07 16:49:48 +0800
 categories: 基础
 tags: java
 ---
+
+* TOC
+{:toc}
+
+
+# 全局变量初始化
+上段代码：
+~~~
+@Service
+public class DemoImpl implements Demo{
+    private static CountDownLatch count = new CountDownLatch(1);
+    private ExecutorService executorService = Executors.newFixedThreadPool(5);
+    public Boolean doSth() {        
+        executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                doThings();
+            }
+        });      
+        try {
+            count.await();
+        } catch (InterruptedException e) {
+            throw new RuntimeException("run deduct data sync interrupted");
+        }
+        return true;
+    }
+}
+~~~
+这个方法会没有通过定时任务执行，每天执行一次。有个很奇怪的情况，正常`doThings()`这个方法需要执行20分钟左右，但这个定时任务执行时间一般只有十几ms，某些时候又会变成正常的20分钟左右。一开始以为同步锁没锁上，是我在使用的时候哪里有问题，但是仔细理了下代码之后发现了问题。
+由于该服务部署在tomcat服务器，使用spring框架。在做类的初始化时默认都是单例，所以这个count只会在重新部署启动时初始化为1，在一次执行完成后，count值变为0；第二次再次执行时，count依旧是0.所以就出现了以上的问题。
+怎么解决这个问题呢?
+1. 首先需要保证每次在执行`doSth`方法时对`count`变量重新做初化
+2. 其次保证同一时刻只有一个线程执行`doSth`方法，也就是做线程同步
+修改后的代码为：
+~~~
+@Service
+public class DemoImpl implements Demo{
+    private static CountDownLatch count;
+    private ExecutorService executorService = Executors.newFixedThreadPool(5);
+    public sychronized Boolean doSth() {        
+        count = new CountDownLatch(1);
+        executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                doThings();
+            }
+        });      
+        try {
+            count.await();
+        } catch (InterruptedException e) {
+            throw new RuntimeException("run deduct data sync interrupted");
+        }
+        return true;
+    }
+}
+~~~
+修改后定时任务的时间记录正常
+
 
 # 循环中的continue和break
 前几天出的一个线上问题,符合条件的数据有3000条,但实际插入到数据库的只有两条.最后查看代码发现这批数据通过for循环插入,而在这个循环中,一个判断条件中增加了`break`导致循环中断.

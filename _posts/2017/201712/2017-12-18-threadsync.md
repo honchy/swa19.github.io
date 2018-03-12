@@ -6,6 +6,9 @@ categories: 基础
 tags: java
 ---
 
+* TOC
+{:toc}
+
 线程同步的几种方式
 # volatile
 
@@ -48,6 +51,53 @@ synchronized可以用来修饰代码块，普通方法，静态方法。其中�
 ![](/_pic/syc.jpg)
 
 每一个线程会维护一个可用monitor record列表，同时还有一个全局的可用列表。每一个被锁住的对象都会和一个Monitor关联，在对象头的LockWord中会保存指向Monitor的起始地址，同时Monitor中保存拥有这个锁的线程标识。
+
+#类锁和对象锁
+根据synchronize修饰对象的不同，加的锁的类型也有所不同，如果加载static域或类上的话，是类锁，其他的是对象锁。
+对于对象锁，同时只能有一个线程可以获取到这个对象的对象锁。
+~~~
+public class TestSync2 implements Runnable {
+    int b = 100;
+    synchronized void m1() throws InterruptedException {
+        b = 1000;
+        Thread.sleep(500); //6
+        System.out.println("b=" + b);
+    }
+    synchronized void m2() throws InterruptedException {
+        Thread.sleep(250); //5
+        b = 2000;
+    }
+    public static void main(String[] args) throws InterruptedException {
+        TestSync2 tt = new TestSync2();
+        Thread t = new Thread(tt);  //1
+        t.start(); //2
+        tt.m2(); //3
+        System.out.println("main thread b=" + tt.b); //4
+    }
+    @Override
+    public void run() {
+        try {
+            m1();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+}
+~~~
+以上代码运行结果为：
+~~~
+main thread b=1000
+b=1000
+如果m1方法调度的线程启动较晚，也可能会出现结果：
+main thread b=2000
+b=1000
+~~~
+
+
+
+
+
+
 参考：
 [volatile对指令重排的影响](https://mp.weixin.qq.com/s/g9J39yvNdPI2a5aXhMrv_Q)
 [死磕 Java 并发：深入分析 synchronized 的实现原理 ](https://mp.weixin.qq.com/s?__biz=MjM5NzMyMjAwMA==&mid=2651478216&idx=1&sn=0a78b71d5b80277f33d3ecfddd657e54&chksm=bd2534b78a52bda1df9f204f633a2c49069efe09dc3d1783888099d935d54e5617b38d9c6ebe&scene=21##)
