@@ -9,6 +9,26 @@ tags: java
 * TOC
 {:toc}
 
+# 通过offset,limit做查询和更新(2018-03-20)
+
+看下代码:
+
+~~~
+Long offset = 0L;
+        Long pageSize = 1000L;
+        while (true) {
+            List<Long> ids = ylKxCustContactMapper.queryEmptyTel(offset, pageSize);
+            if (CollectionUtils.isEmpty(ids)) {
+                break;
+            }
+            ylKxCustContactMapper.deleteEmptyTel(ids);
+            offset += pageSize;
+        }
+~~~
+
+代码执行后,检查数据发现空的电话号码并未被全部删除,哪里出了问题呢?检查代码后恍然大悟:这个代码片段,首先按照offset查找空的电话号码,然后对查出的数据做删除;接着offset增加,再次查询时,空的电话号码总数将变少,当增加offset后,将会有部分未处理的数据被跳过.
+所以这就是根据某个状态做分页查询,再根据查询结果对这个状态做变更后,再次查询下一页数据做同样的操作时,将会导致部分数据被遗漏.
+
 
 # 全局变量初始化
 上段代码：
