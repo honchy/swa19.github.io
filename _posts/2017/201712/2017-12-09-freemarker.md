@@ -6,6 +6,9 @@ categories: 基础
 tags: web
 ---
 
+* TOC
+{:toc}
+
 又要做页面了，这次决定好好学习前端相关的东西，认真做个好看的页面。上次做会议预定系统（manage）的时候用过的Freemarker现在已经忘的差不多了，这次从头到尾再总结一次。
 这次的页面使用了Bootstrap+Freemarker，示例代码在job-scheduler的工程中。
 

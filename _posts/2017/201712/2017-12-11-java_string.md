@@ -6,6 +6,9 @@ categories: 基础
 tags: java
 ---
 
+* TOC
+{:toc}
+
 今天用idea的时候，注意到生成toString代码的时候，提供了两种方式：StringBuilder和StringBuffer，之前一直用的StringBuilder，避免在修改字符串的时候频繁申请内存空间，StringBuffer倒是很少用，刚好有时间，理下这三个类的区别。
 
 # String

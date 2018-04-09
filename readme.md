@@ -3,7 +3,7 @@
 小结：design
 工具：jekyll，idea,maven
 基础：java，mysql，linux，web，ops,python
-框架：netty，spring，dubbo，netty，zookeeper,redis
-其他：python,other
+框架：netty，spring，dubbo，netty，zookeeper,redis,tomcat
+其他：python
 
 
