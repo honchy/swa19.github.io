@@ -6447,6 +6447,9 @@ hr {
   border-radius: 5px;
 }
 /* All levels of nav */
+.sidebar ul.nav {
+  margin-left: 0;
+}
 .sidebar .nav > li > a {
   display: block;
   color: #36556e;
